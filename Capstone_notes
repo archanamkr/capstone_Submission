@@ -1,0 +1,140 @@
+
+Task-0
+
+AWSCli installation 
+
+https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html
+
+Terraform Installation
+
+https://www.terraform.io/docs/cli/install/apt.html
+
+Install EKSCTL
+
+https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html
+
+Install Kubectl 
+
+https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+
+
+Install Docker
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04
+
+Apache benchmark instllation
+
+https://bobcares.com/blog/apache-benchmark-install-ubuntu/
+
+Task-1
+
+
+eksctl create cluster -f archana-eks-conf.yaml
+
+eksctl get nodegroup
+eksctl get cluster
+eksctl get nodegroup --cluster archana-eks-capstone
+
+
+ALL-subnets
+Key: kubernetes.io/cluster/eks-upgrad-capstone Value: shared
+
+Public-subnets
+Key: kubernetes.io/role/elb Value: 1
+
+Private-subnets
+Key: kubernetes.io/role/internal-elb Value: 1
+
+
+To install metrics server
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+
+curl -o cluster-autoscaler-autodiscover.yaml https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+
+Modify the YAML file and replace <YOUR CLUSTER NAME> with your cluster name.
+
+kubectl apply -f cluster-autoscaler-autodiscover.yaml
+
+kubectl annotate serviceaccount cluster-autoscaler \
+  -n kube-system \
+  eks.amazonaws.com/role-arn=arn:aws:iam::695954107174:role/AmazonEKSClusterAutoscalerRole
+
+  kubectl patch deployment cluster-autoscaler \
+  -n kube-system \
+  -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}}}}'
+
+
+kubectl set image deployment cluster-autoscaler \
+  -n kube-system \
+  cluster-autoscaler=k8s.gcr.io/autoscaling/cluster-autoscaler:v1.21.1
+
+Task-2
+
+Repository push commands
+
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 695954107174.dkr.ecr.us-east-1.amazonaws.com
+docker build -t archana-capstone-repository .
+docker tag archana-capstone-repository:latest 695954107174.dkr.ecr.us-east-1.amazonaws.com/archana-capstone-repository:latest
+docker push 695954107174.dkr.ecr.us-east-1.amazonaws.com/archana-capstone-repository:latest
+
+
+docker build -t capstone-node-app -f Dockerfile 
+
+
+
+
+eksctl utils associate-iam-oidc-provider --cluster=my-eks-201-a --approve
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/rbac-role.yaml
+
+curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
+	aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+
+
+eksctl create iamserviceaccount --cluster=my-eks-201-a --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::695954107174:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+
+
+
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
+
+curl -Lo v2_3_0_full.yaml https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.3.0/v2_3_0_full.yaml
+
+kubectl apply -f v2_3_0_full.yaml
+
+
+
+
+
+  metrics server 
+
+  helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm upgrade --install metrics-server metrics-server/metrics-server --namespace demo
+
+
+====================================================Helm prometheus===============================
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+$ kubectl create ns prom
+$ helm install prometheus prometheus-community/kube-prometheus-stack -n demo
+
+$ kubectl get all -n demo
+
+
+kubectl port-forward -n prom prometheus-prom-kube-prometheus-stack-prometheus-0 9090
+kubectl port-forward -n prom prom-grafana-6c4rT64-rjdmk 3000
+
+kubectl port-forward -n demo prometheus-prometheus-kube-prometheus-prometheus-0  --address 0.0.0.0 9090:9090
+
+kubectl port-forward -n demo prometheus-grafana-674dr6c-c6jpw --address 0.0.0.0 3000:3000
+
+
+
+https://github.com/sekka1/cloud-public/tree/master/kubernetes/pods/grafana-helm
+
+
+
+ab -n400 -c10 'http://k8s-demo-upgloadm-37a8a34ec0-701590901.us-east-1.elb.amazonaws.com/load?scale=400'
+
+
+
